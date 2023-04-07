@@ -22,6 +22,8 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw_gl3.h"
 
+#include "Solver.h"
+
 
 int main(void)
 {
@@ -32,8 +34,9 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    float WINDOW_WIDTH = 640.0f;
-    float WINDOW_HEIGHT = 480.0f;
+    float WINDOW_WIDTH = 1200.0f;
+    float WINDOW_HEIGHT = 700.0f;
+
     window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello World", NULL, NULL);
     if (!window)
     {
@@ -53,29 +56,71 @@ int main(void)
         std::cout << "ERROR: could not initialise glew" << std::endl;
 
     std::cout << glGetString(GL_VERSION) << std::endl;
+    
+    // <------ define constants ------>
+    srand(time(NULL));
+    const int pCount = 10000;
+    float* positions = new float[pCount * 16];
+    float* velocities = new float[pCount * 2];
+    unsigned int* indices = new unsigned int[pCount * 6];
+    
+    int vertex_acount = 4;
+    int quad_vacount = 4 * vertex_acount;
+    int quad_icount = 6;
+
+    
+    const float p_size = 2.0f;
+    const float spacing = p_size + 1.0f;
+
+
+    for (int i = 0; i < pCount; i++)
+    {   
+        const float x_offset = (float)(rand() % (1100 - 100 + 1) + 100);
+        const float y_offset = (float)(rand() % (600 - 100 + 1) + 100);
+        // top left
+        positions[i * 4 * 4 + 0] = x_offset;
+        positions[i * 4 * 4 + 1] = y_offset;
+        positions[i * 4 * 4 + 2] = 0.0f;
+        positions[i * 4 * 4 + 3] = 0.0f;
+        // top right
+        positions[i * 4 * 4 + 4] = x_offset + p_size;
+        positions[i * 4 * 4 + 5] = y_offset;
+        positions[i * 4 * 4 + 6] = 1.0f;
+        positions[i * 4 * 4 + 7] = 0.0f;
+        // bottom right
+        positions[i * 4 * 4 + 8] = x_offset + p_size;
+        positions[i * 4 * 4 + 9] = y_offset + p_size;
+        positions[i * 4 * 4 + 10] = 0.0f;
+        positions[i * 4 * 4 + 11] = 1.0f;
+        // bottom left
+        positions[i * 4 * 4 + 12] = x_offset;
+        positions[i * 4 * 4 + 13] = y_offset + p_size;
+        positions[i * 4 * 4 + 14] = 1.0f;
+        positions[i * 4 * 4 + 15] = 1.0f;
+
+    }
+
+    for (int i = 0; i < pCount; i++)
+    {
+        velocities[i * 2 + 0] = (float)(rand() % 20 - 10) / 10;
+        velocities[i * 2 + 1] = (float)(rand() % 20 - 10) / 10;
+    }
+
+    for (int i = 0; i < pCount; i++)
+    {
+        // join order: ( TL, TR, BR )
+        indices[i * quad_icount + 0] = i * 4;
+        indices[i * quad_icount + 1] = i * 4 + 1;
+        indices[i * quad_icount + 2] = i * 4 + 2;
+        // join order: ( BR, BL, TL )
+        indices[i * quad_icount + 3] = i * 4 + 2;
+        indices[i * quad_icount + 4] = i * 4 + 3;
+        indices[i * quad_icount + 5] = i * 4;
+    }
+
     // brackets to create a scope and its just because opengl is annoying
     // and won't "properly" terminate otherwise
     {
-        struct Vertex
-        {
-            float Position[3];
-            float Color[4];
-            float TexCoords[2];
-            float TexIDl;
-        };
-
-        float positions[] = {
-            -50.0f,  50.0f, 0.0f, 0.0f,
-             50.0f,  50.0f, 1.0f, 0.0f,
-             50.0f, -50.0f, 1.0f, 1.0f,
-            -50.0f, -50.0f, 0.0f, 1.0f
-        };
-
-        unsigned int indices[] = {
-            0, 1, 2,
-            2, 3, 0
-        };
-
         GLCall(glEnable(GL_BLEND))
         GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
@@ -85,19 +130,19 @@ int main(void)
         GLCall(glBindVertexArray(vao));
 
         VertexArray va;
-        // buffer = vbo = vertex buffer object
-        VertexBuffer vb(positions, 100 * sizeof(Vertex));
+        VertexBuffer vb(positions,  pCount * quad_vacount * 4); // pcount * vertices attributes per quad * 4 for size of 1 attribute
         VertexBufferLayout layout;
-        layout.Push<float>(2);
-        layout.Push<float>(2);
+        layout.Push<float>(2); // 2 floats for position
+        layout.Push<float>(2); // 2 floats for tex coords 
+
         va.AddBuffer(vb, layout);
         
         // ibo = index buffer object, links buffer with vao
-        IndexBuffer ib(indices, 6);
+        IndexBuffer ib(indices, pCount * 6); // pcount = # quads and each quad = 6 indices
 
         // projection matrix
         glm::vec3 translation(0, 0, 0);
-        glm::mat4 proj = glm::ortho(0.0f, WINDOW_WIDTH, 0.0f, WINDOW_HEIGHT, -1.0f, 1.0f);
+        glm::mat4 proj = glm::ortho(0.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 0.0f, -1.0f, 1.0f);
         glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
         glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
         glm::mat4 mvp = proj * view * model;
@@ -114,12 +159,13 @@ int main(void)
         texture.Bind(); // bind is 0 by default
         shader.SetUniform1i("u_Texture", 0); // # needs to match bind # from above
 
-        va.Unbind();
+        /*va.Unbind();
         vb.Unbind();
         ib.Unbind();
-        shader.Unbind();
+        shader.Unbind();*/
 
         Renderer renderer;
+        Solver solver(WINDOW_WIDTH, WINDOW_HEIGHT);
 
         // initialise gui
         ImGui::CreateContext();
@@ -136,8 +182,23 @@ int main(void)
 
         /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))
-    
         {
+            for (int i = 0; i < pCount; i++)
+            {
+                solver.updatePosition(&positions[16 * i], &velocities[2 * i], p_size);
+                solver.wallCollision(&positions[16 * i], &velocities[2 * i], p_size);
+               /* positions[i * 16 + 0]  += velocities[2 * i + 0];
+                positions[i * 16 + 1]  += velocities[2 * i + 1];
+                positions[i * 16 + 4]  += velocities[2 * i + 0];
+                positions[i * 16 + 5]  += velocities[2 * i + 1];
+                positions[i * 16 + 8]  += velocities[2 * i + 0];
+                positions[i * 16 + 9]  += velocities[2 * i + 1];
+                positions[i * 16 + 12] += velocities[2 * i + 0];
+                positions[i * 16 + 13] += velocities[2 * i + 1];*/
+            }
+
+            vb.UpdateBuffer(positions, pCount * quad_vacount * 4);
+
             /* Render here */
             renderer.Clear();
 
@@ -157,8 +218,8 @@ int main(void)
 
             /* Render gui */
             {
-                ImGui::Text("Settings");                           // Display some text (you can use a format string too)
-                ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 200.0f);
+                ImGui::Text("Settings");
+                ImGui::SliderFloat3("Translation", &translation.x, -200.0f, 200.0f);
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             }
             model = glm::translate(glm::mat4(1.0f), translation);
@@ -174,6 +235,9 @@ int main(void)
             glfwPollEvents();
         }
     }
+
+    delete[] positions;
+    delete[] indices;
     ImGui_ImplGlfwGL3_Shutdown();
     ImGui::DestroyContext();
     glfwTerminate();
