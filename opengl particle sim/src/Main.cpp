@@ -23,7 +23,9 @@
 #include "imgui/imgui_impl_glfw_gl3.h"
 
 #include "Solver.h"
-
+#include <vector>
+#include <typeinfo>
+#include "Grid.h"
 
 int main(void)
 {
@@ -57,56 +59,63 @@ int main(void)
 
     std::cout << glGetString(GL_VERSION) << std::endl;
     
-    // <------ define constants ------>
+    // <------ define constants and settings ------>
     srand(time(NULL));
-    const int pCount = 10000;
-    float* positions = new float[pCount * 16];
-    float* velocities = new float[pCount * 2];
-    unsigned int* indices = new unsigned int[pCount * 6];
-    
-    int vertex_acount = 4;
-    int quad_vacount = 4 * vertex_acount;
-    int quad_icount = 6;
+    const int vertex_acount = 5;
+    const int quad_vacount = 4 * vertex_acount;
+    const int quad_icount = 6;
 
+    const int p_count = 100;
+    float* positions = new float[p_count * quad_vacount];
+    float* velocities = new float[p_count * 2];
+    unsigned int* indices = new unsigned int[p_count * 6];
     
-    const float p_size = 2.0f;
+    const float p_size = 32.0f;
     const float spacing = p_size + 1.0f;
 
+    const int rows = 3;
+    const int cols = 3;
 
-    for (int i = 0; i < pCount; i++)
+
+    for (int i = 0; i < p_count; i++)
     {   
         const float x_offset = (float)(rand() % (1100 - 100 + 1) + 100);
         const float y_offset = (float)(rand() % (600 - 100 + 1) + 100);
+        const float t_offset = (float)round(rand() % 2);
         // top left
-        positions[i * 4 * 4 + 0] = x_offset;
-        positions[i * 4 * 4 + 1] = y_offset;
-        positions[i * 4 * 4 + 2] = 0.0f;
-        positions[i * 4 * 4 + 3] = 0.0f;
-        // top right
-        positions[i * 4 * 4 + 4] = x_offset + p_size;
-        positions[i * 4 * 4 + 5] = y_offset;
-        positions[i * 4 * 4 + 6] = 1.0f;
-        positions[i * 4 * 4 + 7] = 0.0f;
-        // bottom right
-        positions[i * 4 * 4 + 8] = x_offset + p_size;
-        positions[i * 4 * 4 + 9] = y_offset + p_size;
-        positions[i * 4 * 4 + 10] = 0.0f;
-        positions[i * 4 * 4 + 11] = 1.0f;
-        // bottom left
-        positions[i * 4 * 4 + 12] = x_offset;
-        positions[i * 4 * 4 + 13] = y_offset + p_size;
-        positions[i * 4 * 4 + 14] = 1.0f;
-        positions[i * 4 * 4 + 15] = 1.0f;
+        positions[i * quad_vacount + 0] = x_offset;
+        positions[i * quad_vacount + 1] = y_offset;
+        positions[i * quad_vacount + 2] = 0.0f;
+        positions[i * quad_vacount + 3] = 0.0f;
+        positions[i * quad_vacount + 4] = t_offset;
+        // top right  quad_vacount
+        positions[i * quad_vacount + 5] = x_offset + p_size;
+        positions[i * quad_vacount + 6] = y_offset;
+        positions[i * quad_vacount + 7] = 0.5f;
+        positions[i * quad_vacount + 8] = 0.0f;
+        positions[i * quad_vacount + 9] = t_offset;
+        // bottom     quad_vacount
+        positions[i * quad_vacount + 10] = x_offset + p_size;
+        positions[i * quad_vacount + 11] = y_offset + p_size;
+        positions[i * quad_vacount + 12] = 0.5f;
+        positions[i * quad_vacount + 13] = 1.0f;
+        positions[i * quad_vacount + 14] = t_offset;
+        // bottom     quad_vacount
+        positions[i * quad_vacount + 15] = x_offset;
+        positions[i * quad_vacount + 16] = y_offset + p_size;
+        positions[i * quad_vacount + 17] = 0.0f;
+        positions[i * quad_vacount + 18] = 1.0f;
+        positions[i * quad_vacount + 19] = t_offset;
 
     }
 
-    for (int i = 0; i < pCount; i++)
+    for (int i = 0; i < p_count; i++)
     {
         velocities[i * 2 + 0] = (float)(rand() % 20 - 10) / 10;
         velocities[i * 2 + 1] = (float)(rand() % 20 - 10) / 10;
     }
 
-    for (int i = 0; i < pCount; i++)
+    for (int i = 0; i < p_count; i++)
     {
         // join order: ( TL, TR, BR )
         indices[i * quad_icount + 0] = i * 4;
@@ -117,6 +126,31 @@ int main(void)
         indices[i * quad_icount + 4] = i * 4 + 3;
         indices[i * quad_icount + 5] = i * 4;
     }
+
+    Grid grid;
+    //auto grid = new std::vector<float*>[rows][cols];
+    //std::string s = typeid(grid).name();
+    //grid[1][1].push_back(&positions[0]);
+    //grid[1][1].push_back(&positions[1]);
+    /*grid.AddObject(&positions[16*0]);
+    grid.AddObject(&positions[16*1]);
+    grid.AddObject(&positions[16*2]);
+    grid.AddObject(&positions[16*3]);
+
+    std::cout << positions[16*0] << std::endl;
+    std::cout << positions[16*1] << std::endl;*/
+    for (int i = 0; i < 5; i++)
+    {
+        grid.AddObject(&positions[20 * i]);
+        std::cout << positions[20 * i] << ", " << positions[20 * i + 1] << std::endl;
+    }
+
+    grid.ReadData(&positions[20 *0]);
+    grid.RemoveObject(&positions[20 *1]);
+    //grid.ReadData(&positions[20*0]);
+    grid.FindNear(&positions[20 *0]);
+
+    return 0;
 
     // brackets to create a scope and its just because opengl is annoying
     // and won't "properly" terminate otherwise
@@ -130,15 +164,16 @@ int main(void)
         GLCall(glBindVertexArray(vao));
 
         VertexArray va;
-        VertexBuffer vb(positions,  pCount * quad_vacount * 4); // pcount * vertices attributes per quad * 4 for size of 1 attribute
+        VertexBuffer vb(positions,  p_count * quad_vacount * 4); // p_count * vertices attributes per quad * 4 for size of 1 attribute
         VertexBufferLayout layout;
         layout.Push<float>(2); // 2 floats for position
         layout.Push<float>(2); // 2 floats for tex coords 
+        layout.Push<float>(1); // 1 float for tex idx 
 
         va.AddBuffer(vb, layout);
         
         // ibo = index buffer object, links buffer with vao
-        IndexBuffer ib(indices, pCount * 6); // pcount = # quads and each quad = 6 indices
+        IndexBuffer ib(indices, p_count * 6); // p_count = # quads and each quad = 6 indices
 
         // projection matrix
         glm::vec3 translation(0, 0, 0);
@@ -155,10 +190,16 @@ int main(void)
         shader.SetUniform4f("u_Color", 0.2f, 0.9f, 0.4f, 1.0f);
         shader.SetUniformMat4f("u_MVP", mvp);
 
-        Texture texture("res/textures/enemy2.png");
-        texture.Bind(); // bind is 0 by default
-        shader.SetUniform1i("u_Texture", 0); // # needs to match bind # from above
 
+        /*Texture texture2("res/textures/hit.png");
+        texture2.Bind(1);
+        shader.SetUniform1i("u_Textures", 1);*/
+
+        Texture texture("res/textures/circles.png");
+        texture.Bind(); // bind is 0 by default
+        shader.SetUniform1i("u_Textures", 0); // # needs to match bind # from above
+        
+        
         /*va.Unbind();
         vb.Unbind();
         ib.Unbind();
@@ -183,21 +224,14 @@ int main(void)
         /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))
         {
-            for (int i = 0; i < pCount; i++)
+            for (int i = 0; i < p_count; i++)
             {
-                solver.updatePosition(&positions[16 * i], &velocities[2 * i], p_size);
-                solver.wallCollision(&positions[16 * i], &velocities[2 * i], p_size);
-               /* positions[i * 16 + 0]  += velocities[2 * i + 0];
-                positions[i * 16 + 1]  += velocities[2 * i + 1];
-                positions[i * 16 + 4]  += velocities[2 * i + 0];
-                positions[i * 16 + 5]  += velocities[2 * i + 1];
-                positions[i * 16 + 8]  += velocities[2 * i + 0];
-                positions[i * 16 + 9]  += velocities[2 * i + 1];
-                positions[i * 16 + 12] += velocities[2 * i + 0];
-                positions[i * 16 + 13] += velocities[2 * i + 1];*/
+                solver.updatePosition(&positions[quad_vacount * i], &velocities[2 * i], p_size);
+                solver.wallCollision(&positions[quad_vacount * i], &velocities[2 * i], p_size);
             }
+            solver.particleCollision(&positions[0], p_count, p_size, quad_vacount);
 
-            vb.UpdateBuffer(positions, pCount * quad_vacount * 4);
+            vb.UpdateBuffer(positions, p_count * quad_vacount * 4);
 
             /* Render here */
             renderer.Clear();
@@ -238,6 +272,7 @@ int main(void)
 
     delete[] positions;
     delete[] indices;
+    grid.~Grid();
     ImGui_ImplGlfwGL3_Shutdown();
     ImGui::DestroyContext();
     glfwTerminate();
