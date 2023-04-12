@@ -1,4 +1,6 @@
 #pragma once
+#include "Grid.h"
+
 static class Solver
 {
 private:
@@ -7,6 +9,6 @@ private:
 public:
 	Solver(float width, float height);
 	void wallCollision(float* quadAttribIdx, float* velocityIdx, float size);
-	void particleCollision(float* quadAttribIdx, int p_count, int p_size, int quad_vacount);
+	void particleCollision(float* quadAttribIdx, int p_count, int p_size, int quad_vacount, Grid* grid);
 	void updatePosition(float* quadAttribIdx, float* velocityIdx, float size);
 };

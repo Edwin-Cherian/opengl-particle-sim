@@ -26,6 +26,7 @@
 #include <vector>
 #include <typeinfo>
 #include "Grid.h"
+#include <chrono>
 
 int main(void)
 {
@@ -65,18 +66,20 @@ int main(void)
     const int quad_vacount = 4 * vertex_acount;
     const int quad_icount = 6;
 
-    const int p_count = 100;
+    const int p_count = 20000;
     float* positions = new float[p_count * quad_vacount];
     float* velocities = new float[p_count * 2];
     unsigned int* indices = new unsigned int[p_count * 6];
     
-    const float p_size = 32.0f;
+    const float p_size = 4.0f;
     const float spacing = p_size + 1.0f;
 
     const int rows = 3;
     const int cols = 3;
 
+    Grid* grid = new Grid;
 
+    // fill position array with vertex buffer data for particles
     for (int i = 0; i < p_count; i++)
     {   
         const float x_offset = (float)(rand() % (1100 - 100 + 1) + 100);
@@ -107,14 +110,17 @@ int main(void)
         positions[i * quad_vacount + 18] = 1.0f;
         positions[i * quad_vacount + 19] = t_offset;
 
+        grid->AddObject(&positions[i * quad_vacount]);
     }
 
+    // fill velocities array with random x and y velocities
     for (int i = 0; i < p_count; i++)
     {
         velocities[i * 2 + 0] = (float)(rand() % 20 - 10) / 10;
         velocities[i * 2 + 1] = (float)(rand() % 20 - 10) / 10;
     }
 
+    // fill indices array with index buffer data for particles
     for (int i = 0; i < p_count; i++)
     {
         // join order: ( TL, TR, BR )
@@ -127,31 +133,18 @@ int main(void)
         indices[i * quad_icount + 5] = i * 4;
     }
 
-    Grid grid;
-    //auto grid = new std::vector<float*>[rows][cols];
-    //std::string s = typeid(grid).name();
-    //grid[1][1].push_back(&positions[0]);
-    //grid[1][1].push_back(&positions[1]);
-    /*grid.AddObject(&positions[16*0]);
-    grid.AddObject(&positions[16*1]);
-    grid.AddObject(&positions[16*2]);
-    grid.AddObject(&positions[16*3]);
 
-    std::cout << positions[16*0] << std::endl;
-    std::cout << positions[16*1] << std::endl;*/
-    for (int i = 0; i < 5; i++)
-    {
-        grid.AddObject(&positions[20 * i]);
-        std::cout << positions[20 * i] << ", " << positions[20 * i + 1] << std::endl;
-    }
-
-    grid.ReadData(&positions[20 *0]);
-    grid.RemoveObject(&positions[20 *1]);
+    //grid.ReadData(&positions[20 *0]);
+    //grid.RemoveObject(&positions[20 *1]);
     //grid.ReadData(&positions[20*0]);
-    grid.FindNear(&positions[20 *0]);
-
-    return 0;
-
+    /*auto t = grid.FindNear(&positions[20 *0]);
+    std::cout << "testing nearby fuunc" << std::endl;
+    for (float* v : t)
+    {
+        std::cout << *v << ", " << *(v + 1) << std::endl;
+    }*/
+    
+    
     // brackets to create a scope and its just because opengl is annoying
     // and won't "properly" terminate otherwise
     {
@@ -224,12 +217,26 @@ int main(void)
         /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))
         {
+            auto start = std::chrono::high_resolution_clock::now();
+            for (int i = 0; i < p_count; i++)
+            {
+                grid->RemoveObject(&positions[quad_vacount * i]);
+            }
+            auto stop = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+            std::cout << duration.count() << std::endl;
+
             for (int i = 0; i < p_count; i++)
             {
                 solver.updatePosition(&positions[quad_vacount * i], &velocities[2 * i], p_size);
                 solver.wallCollision(&positions[quad_vacount * i], &velocities[2 * i], p_size);
+                grid->AddObject(&positions[quad_vacount * i]);
             }
-            solver.particleCollision(&positions[0], p_count, p_size, quad_vacount);
+
+            for (int j = 0; j < p_count; j++)
+            {
+                solver.particleCollision(&positions[quad_vacount * j], p_count, p_size, quad_vacount, grid);
+            }
 
             vb.UpdateBuffer(positions, p_count * quad_vacount * 4);
 
@@ -267,12 +274,13 @@ int main(void)
 
             /* Poll for and process events */
             glfwPollEvents();
+          
         }
     }
 
     delete[] positions;
     delete[] indices;
-    grid.~Grid();
+    grid->~Grid();
     ImGui_ImplGlfwGL3_Shutdown();
     ImGui::DestroyContext();
     glfwTerminate();
