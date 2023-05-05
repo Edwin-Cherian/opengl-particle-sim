@@ -3,11 +3,12 @@
 
 Grid::Grid()
 {
-
+    cudaMallocManaged( &pgrid, 6000000 );
 }
 
 Grid::~Grid()
 {
+    cudaFree(pgrid);
     std::cout << "make a grid destructor pls";
 }
 

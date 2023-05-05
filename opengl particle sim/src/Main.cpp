@@ -28,6 +28,7 @@
 #include "Grid.h"
 #include <chrono>
 
+
 int main(void)
 {
     GLFWwindow* window;
@@ -40,13 +41,12 @@ int main(void)
     float WINDOW_WIDTH = 1200.0f;
     float WINDOW_HEIGHT = 700.0f;
 
-    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello World", NULL, NULL);
+    window = glfwCreateWindow((int) WINDOW_WIDTH, (int) WINDOW_HEIGHT, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
         return -1;
     }
-
 
 
     /* Make the window's context current */
@@ -61,12 +61,12 @@ int main(void)
     std::cout << glGetString(GL_VERSION) << std::endl;
     
     // <------ define constants and settings ------>
-    srand(time(NULL));
+    srand((unsigned int) time(NULL));
     const int vertex_acount = 5;
     const int quad_vacount = 4 * vertex_acount;
     const int quad_icount = 6;
 
-    const int p_count = 20000;
+    const int p_count = 10000;
     float* positions = new float[p_count * quad_vacount];
     float* velocities = new float[p_count * 2];
     unsigned int* indices = new unsigned int[p_count * 6];
@@ -78,6 +78,8 @@ int main(void)
     const int cols = 3;
 
     Grid* grid = new Grid;
+
+
 
     // fill position array with vertex buffer data for particles
     for (int i = 0; i < p_count; i++)
@@ -91,19 +93,19 @@ int main(void)
         positions[i * quad_vacount + 2] = 0.0f;
         positions[i * quad_vacount + 3] = 0.0f;
         positions[i * quad_vacount + 4] = t_offset;
-        // top right  quad_vacount
+        // top right 
         positions[i * quad_vacount + 5] = x_offset + p_size;
         positions[i * quad_vacount + 6] = y_offset;
         positions[i * quad_vacount + 7] = 0.5f;
         positions[i * quad_vacount + 8] = 0.0f;
         positions[i * quad_vacount + 9] = t_offset;
-        // bottom     quad_vacount
+        // bottom    
         positions[i * quad_vacount + 10] = x_offset + p_size;
         positions[i * quad_vacount + 11] = y_offset + p_size;
         positions[i * quad_vacount + 12] = 0.5f;
         positions[i * quad_vacount + 13] = 1.0f;
         positions[i * quad_vacount + 14] = t_offset;
-        // bottom     quad_vacount
+        // bottom   
         positions[i * quad_vacount + 15] = x_offset;
         positions[i * quad_vacount + 16] = y_offset + p_size;
         positions[i * quad_vacount + 17] = 0.0f;
@@ -116,8 +118,8 @@ int main(void)
     // fill velocities array with random x and y velocities
     for (int i = 0; i < p_count; i++)
     {
-        velocities[i * 2 + 0] = (float)(rand() % 20 - 10) / 10;
-        velocities[i * 2 + 1] = (float)(rand() % 20 - 10) / 10;
+        velocities[i * 2 + 1] = (float)(rand() % 200 - 100) / 200;
+        velocities[i * 2 + 0] = (float)(rand() % 200 - 100) / 200;
     }
 
     // fill indices array with index buffer data for particles
@@ -133,17 +135,6 @@ int main(void)
         indices[i * quad_icount + 5] = i * 4;
     }
 
-
-    //grid.ReadData(&positions[20 *0]);
-    //grid.RemoveObject(&positions[20 *1]);
-    //grid.ReadData(&positions[20*0]);
-    /*auto t = grid.FindNear(&positions[20 *0]);
-    std::cout << "testing nearby fuunc" << std::endl;
-    for (float* v : t)
-    {
-        std::cout << *v << ", " << *(v + 1) << std::endl;
-    }*/
-    
     
     // brackets to create a scope and its just because opengl is annoying
     // and won't "properly" terminate otherwise
@@ -184,19 +175,10 @@ int main(void)
         shader.SetUniformMat4f("u_MVP", mvp);
 
 
-        /*Texture texture2("res/textures/hit.png");
-        texture2.Bind(1);
-        shader.SetUniform1i("u_Textures", 1);*/
-
         Texture texture("res/textures/circles.png");
         texture.Bind(); // bind is 0 by default
         shader.SetUniform1i("u_Textures", 0); // # needs to match bind # from above
         
-        
-        /*va.Unbind();
-        vb.Unbind();
-        ib.Unbind();
-        shader.Unbind();*/
 
         Renderer renderer;
         Solver solver(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -217,26 +199,26 @@ int main(void)
         /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))
         {
-            auto start = std::chrono::high_resolution_clock::now();
+            // Remove particles from grid data structure
             for (int i = 0; i < p_count; i++)
             {
                 grid->RemoveObject(&positions[quad_vacount * i]);
             }
-            auto stop = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-            std::cout << duration.count() << std::endl;
 
+            // Update position of every particle, handle wall collisions then add particles back into grid data structure
             for (int i = 0; i < p_count; i++)
             {
-                solver.updatePosition(&positions[quad_vacount * i], &velocities[2 * i], p_size);
+                solver.updatePosition(&positions[quad_vacount * i], &velocities[2 * i], p_size,1);
                 solver.wallCollision(&positions[quad_vacount * i], &velocities[2 * i], p_size);
                 grid->AddObject(&positions[quad_vacount * i]);
             }
 
+            // Resolve colisions between particles
             for (int j = 0; j < p_count; j++)
             {
                 solver.particleCollision(&positions[quad_vacount * j], p_count, p_size, quad_vacount, grid);
             }
+
 
             vb.UpdateBuffer(positions, p_count * quad_vacount * 4);
 
@@ -286,6 +268,14 @@ int main(void)
     glfwTerminate();
     return 0;
 }
+
+
+
+
+
+
+
+
 
 //using namespace std;
 //

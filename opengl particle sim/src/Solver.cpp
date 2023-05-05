@@ -37,11 +37,7 @@ void Solver::particleCollision(float* quadAttribIdx, int p_count, int p_size, in
 	int count = 0;
 	for (float* other : nearby)
 	{
-		/*if (pow(*(quadAttribIdx + 0) - *(other + 0), 2) +
-			pow(*(quadAttribIdx + 1) - *(other + 1), 2) < pow(p_size, 2))
-		{
-			count++;
-		}*/
+		// compute distance between current particle and nearby particles to test for collisions
 		if ((*(quadAttribIdx + 0) - *(other + 0)) * (*(quadAttribIdx + 0) - *(other + 0)) +
 			(*(quadAttribIdx + 1) - *(other + 1)) * (*(quadAttribIdx + 1) - *(other + 1)) < p_size * p_size)
 		{
@@ -64,14 +60,14 @@ void Solver::particleCollision(float* quadAttribIdx, int p_count, int p_size, in
 	}
 }
 
-void Solver::updatePosition(float* quadAttribIdx, float* velocityIdx, float p_size)
+void Solver::updatePosition(float* quadAttribIdx, float* velocityIdx, float p_size, float dt)
 {
-	*(quadAttribIdx + 0)  = *(quadAttribIdx + 0) + *(velocityIdx + 0);
-	*(quadAttribIdx + 1)  = *(quadAttribIdx + 1) + *(velocityIdx + 1);
-	*(quadAttribIdx + 5)  = *(quadAttribIdx + 0) + *(velocityIdx + 0) + p_size;
-	*(quadAttribIdx + 6)  = *(quadAttribIdx + 1) + *(velocityIdx + 1);     
-	*(quadAttribIdx + 10) = *(quadAttribIdx + 0) + *(velocityIdx + 0) + p_size;
-	*(quadAttribIdx + 11) = *(quadAttribIdx + 1) + *(velocityIdx + 1) + p_size;
-	*(quadAttribIdx + 15) = *(quadAttribIdx + 0) + *(velocityIdx + 0);
-	*(quadAttribIdx + 16) = *(quadAttribIdx + 1) + *(velocityIdx + 1) + p_size;
+	*(quadAttribIdx + 0)  = *(quadAttribIdx + 0) + 1 * *(velocityIdx + 0);
+	*(quadAttribIdx + 1)  = *(quadAttribIdx + 1) + 1 * *(velocityIdx + 1);
+	*(quadAttribIdx + 5)  = *(quadAttribIdx + 0) + 1 * *(velocityIdx + 0) + p_size;
+	*(quadAttribIdx + 6)  = *(quadAttribIdx + 1) + 1 * *(velocityIdx + 1);     
+	*(quadAttribIdx + 10) = *(quadAttribIdx + 0) + 1 * *(velocityIdx + 0) + p_size;
+	*(quadAttribIdx + 11) = *(quadAttribIdx + 1) + 1 * *(velocityIdx + 1) + p_size;
+	*(quadAttribIdx + 15) = *(quadAttribIdx + 0) + 1 * *(velocityIdx + 0);
+	*(quadAttribIdx + 16) = *(quadAttribIdx + 1) + 1 * *(velocityIdx + 1) + p_size;
 }

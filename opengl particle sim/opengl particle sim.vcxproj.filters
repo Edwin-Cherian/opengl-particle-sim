@@ -54,10 +54,10 @@
     <ClCompile Include="src\vendor\imgui\imgui_impl_glfw_gl3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Solver.cpp">
+    <ClCompile Include="src\Grid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Grid.cpp">
+    <ClCompile Include="src\Solver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1372,10 +1372,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\textures\enemy.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="res\textures\enemy2.png">
+    <Image Include="res\textures\circles.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
